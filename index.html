@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StellarScope | Premium Astronomy Gear</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Exo+2:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Loading Animation -->
+    <div class="loading-screen">
+        <div class="loading-content">
+            <div class="planet-loader">
+                <div class="orbit">
+                    <div class="satellite"></div>
+                </div>
+                <div class="central-star"></div>
+            </div>
+            <p class="loading-text">Initializing Stellar Experience...</p>
+        </div>
+    </div>
+
+    <!-- Sound Toggle -->
+    <div class="sound-toggle" id="soundToggle">
+        <i class="fas fa-volume-up"></i>
+    </div>
+
+    <!-- Auth Modal -->
+    <div class="auth-modal" id="authModal">
+        <div class="auth-container glass-card">
+            <button class="close-auth" id="closeAuth">&times;</button>
+            <div class="auth-header">
+                <h2><i class="fas fa-user-astronaut"></i> Stellar Access</h2>
+                <p>Login to place orders and track your cosmic journey</p>
+            </div>
+            
+            <!-- Login Form -->
+            <div class="auth-form active" id="loginForm">
+                <div class="form-step active" id="phoneStep">
+                    <h3>Enter Your Mobile Number</h3>
+                    <div class="country-selector">
+                        <select id="countryCode">
+                            <option value="+91">India (+91)</option>
+                            <option value="+1">USA (+1)</option>
+                            <option value="+44">UK (+44)</option>
+                            <option value="+61">Australia (+61)</option>
+                            <option value="+49">Germany (+49)</option>
+                            <option value="+81">Japan (+81)</option>
+                            <option value="+86">China (+86)</option>
+                        </select>
+                        <input type="tel" id="phoneNumber" placeholder="Enter mobile number" maxlength="15">
+                    </div>
+                    <button class="auth-btn" id="sendOTP">Send OTP <i class="fas fa-paper-plane"></i></button>
+                    <div class="recaptcha-notice">
+                        <i class="fas fa-shield-alt"></i> Protected by invisible reCAPTCHA
+                    </div>
+                </div>
+                
+                <div class="form-step" id="otpStep">
+                    <h3>Enter OTP</h3>
+                    <p class="otp-info">We've sent a 6-digit code to <span id="phoneDisplay"></span></p>
+                    <div class="otp-container">
+                        <input type="text" class="otp-input" maxlength="1" data-index="0">
+                        <input type="text" class="otp-input" maxlength="1" data-index="1">
+                        <input type="text" class="otp-input" maxlength="1" data-index="2">
+                        <input type="text" class="otp-input" maxlength="1" data-index="3">
+                        <input type="text" class="otp-input" maxlength="1" data-index="4">
+                        <input type="text" class="otp-input" maxlength="1" data-index="5">
+                    </div>
+                    <div class="otp-actions">
+                        <button class="auth-btn" id="verifyOTP">Verify OTP <i class="fas fa-check-circle"></i></button>
+                        <button class="auth-btn secondary" id="resendOTP">Resend OTP <i class="fas fa-redo"></i></button>
+                    </div>
+                    <p class="otp-timer" id="otpTimer">Resend OTP in <span id="countdown">59</span>s</p>
+                </div>
+            </div>
+            
+            <!-- User Info Form (After OTP Verification) -->
+            <div class="auth-form" id="userInfoForm">
+                <h3>Complete Your Profile</h3>
+                <input type="text" id="userName" placeholder="Full Name">
+                <input type="email" id="userEmail" placeholder="Email (optional)">
+                <button class="auth-btn" id="saveUserInfo">Continue <i class="fas fa-rocket"></i></button>
+            </div>
+            
+            <div class="auth-footer">
+                <p>By continuing, you agree to our <a href="#">Terms</a> and <a href="#">Privacy Policy</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header & Navigation -->
+    <header class="glass-header">
+        <div class="container">
+            <nav class="navbar">
+                <a href="#" class="logo">
+                    <i class="fas fa-star"></i>
+                    <span>StellarScope</span>
+                </a>
+                
+                <div class="nav-links">
+                    <a href="#home" class="nav-link active">Home</a>
+                    <a href="#products" class="nav-link">Products</a>
+                    <a href="#why-us" class="nav-link">Why Us</a>
+                    <a href="#contact" class="nav-link">Contact</a>
+                </div>
+                
+                <div class="nav-actions">
+                    <div class="user-info" id="userInfo">
+                        <i class="fas fa-user-circle"></i>
+                        <span id="userDisplayName">Guest</span>
+                    </div>
+                    <button class="login-btn" id="loginBtn">
+                        <i class="fas fa-sign-in-alt"></i>
+                        <span>Login</span>
+                    </button>
+                    <button class="logout-btn" id="logoutBtn" style="display: none;">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Logout</span>
+                    </button>
+                </div>
+                
+                <div class="mobile-toggle">
+                    <i class="fas fa-bars"></i>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+        <div class="container">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    <span class="title-line">Explore The</span>
+                    <span class="title-line highlight">Cosmos</span>
+                    <span class="title-line">With Us</span>
+                </h1>
+                <p class="hero-subtitle">Premium astronomy gear for stargazers, astrophotographers, and cosmic explorers. Journey through the universe with our curated collection.</p>
+                <div class="hero-buttons">
+                    <a href="#products" class="btn btn-primary">
+                        <span>Shop Now</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </a>
+                    <a href="#why-us" class="btn btn-secondary">
+                        <span>Discover</span>
+                        <i class="fas fa-compass"></i>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="hero-visual">
+                <div class="floating-objects">
+                    <div class="float-object planet" style="--delay: 0s;"></div>
+                    <div class="float-object satellite" style="--delay: 1s;"></div>
+                    <div class="float-object comet" style="--delay: 2s;"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Scroll Indicator -->
+        <div class scroll-indicator>
+            <div class="scroll-line"></div>
+            <p>Scroll to explore</p>
+        </div>
+    </section>
+
+    <!-- Products Section -->
+    <section class="products-section" id="products">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Cosmic Collection</h2>
+                <p class="section-subtitle">Curated astronomy products for every stargazer</p>
+            </div>
+            
+            <div class="products-filter">
+                <button class="filter-btn active" data-filter="all">All Products</button>
+                <button class="filter-btn" data-filter="telescopes">Telescopes</button>
+                <button class="filter-btn" data-filter="clothing">Clothing</button>
+                <button class="filter-btn" data-filter="accessories">Accessories</button>
+            </div>
+            
+            <div class="products-grid" id="productsGrid">
+                <!-- Products will be dynamically generated here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Why Choose Us -->
+    <section class="why-us" id="why-us">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Why StellarScope</h2>
+                <p class="section-subtitle">Experience the universe like never before</p>
+            </div>
+            
+            <div class="features-grid">
+                <div class="feature-card glass-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-shipping-fast"></i>
+                    </div>
+                    <h3>Global Shipping</h3>
+                    <p>Fast delivery to any corner of the world, with careful packaging for your cosmic gear.</p>
+                </div>
+                
+                <div class="feature-card glass-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-headset"></i>
+                    </div>
+                    <h3>Expert Support</h3>
+                    <p>Our astronomy experts are available 24/7 to help you choose the perfect equipment.</p>
+                </div>
+                
+                <div class="feature-card glass-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-award"></i>
+                    </div>
+                    <h3>Premium Quality</h3>
+                    <p>We source only the highest quality telescopes and accessories from trusted brands.</p>
+                </div>
+                
+                <div class="feature-card glass-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-hand-holding-usd"></i>
+                    </div>
+                    <h3>Astronomy Community</h3>
+                    <p>Join our community of stargazers with exclusive events, workshops, and star parties.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact & Order Info -->
+    <section class="contact-section" id="contact">
+        <div class="container">
+            <div class="contact-content">
+                <div class="contact-info glass-card">
+                    <h2>Ready for Your Cosmic Journey?</h2>
+                    <p>Have questions about our products or need help choosing the right telescope? Our team of astronomy enthusiasts is here to help.</p>
+                    
+                    <div class="contact-details">
+                        <div class="contact-item">
+                            <i class="fas fa-comments"></i>
+                            <div>
+                                <h4>WhatsApp Orders</h4>
+                                <p>+91 9957811508</p>
+                                <small>Click "Order Now" on any product to send order details via WhatsApp</small>
+                            </div>
+                        </div>
+                        
+                        <div class="contact-item">
+                            <i class="fas fa-envelope"></i>
+                            <div>
+                                <h4>Email Support</h4>
+                                <p>support@stellarsope.com</p>
+                            </div>
+                        </div>
+                        
+                        <div class="contact-item">
+                            <i class="fas fa-clock"></i>
+                            <div>
+                                <h4>Response Time</h4>
+                                <p>Typically within 1 hour</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="whatsapp-cta glass-card">
+                    <div class="whatsapp-icon">
+                        <i class="fab fa-whatsapp"></i>
+                    </div>
+                    <h3>Direct WhatsApp Orders</h3>
+                    <p>Ordering is simple. Just select a product, choose your options, and the order details will be sent directly to our WhatsApp.</p>
+                    <p class="highlight-text">No complex checkout. No accounts needed (after login). Just instant communication.</p>
+                    <a href="https://wa.me/919957811508?text=Hello%20StellarScope%21%20I%20need%20help%20choosing%20a%20product." class="btn btn-whatsapp" target="_blank">
+                        <i class="fab fa-whatsapp"></i> Chat with us on WhatsApp
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <a href="#" class="logo">
+                        <i class="fas fa-star"></i>
+                        <span>StellarScope</span>
+                    </a>
+                    <p>Bringing the cosmos closer to you since 2023. Premium astronomy products for explorers of the universe.</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-youtube"></i></a>
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                    </div>
+                </div>
+                
+                <div class="footer-links">
+                    <h4>Quick Links</h4>
+                    <a href="#home">Home</a>
+                    <a href="#products">Products</a>
+                    <a href="#why-us">Why Us</a>
+                    <a href="#contact">Contact</a>
+                </div>
+                
+                <div class="footer-links">
+                    <h4>Categories</h4>
+                    <a href="#" data-filter="telescopes">Telescopes</a>
+                    <a href="#" data-filter="clothing">Clothing</a>
+                    <a href="#" data-filter="accessories">Accessories</a>
+                </div>
+                
+                <div class="footer-cta">
+                    <h4>Ready to Explore?</h4>
+                    <p>Login to start your cosmic shopping journey</p>
+                    <button class="btn btn-primary" id="footerLoginBtn">
+                        <i class="fas fa-rocket"></i> Get Started
+                    </button>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2023 StellarScope. All rights reserved. | <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a></p>
+                <p class="firebase-credit">Secured with <i class="fas fa-shield-alt"></i> Firebase Authentication</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Product Detail Modal -->
+    <div class="product-modal" id="productModal">
+        <div class="product-modal-content glass-card">
+            <button class="close-modal" id="closeModal">&times;</button>
+            <div class="modal-body" id="modalBody">
+                <!-- Product details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Confirmation Modal -->
+    <div class="order-modal" id="orderModal">
+        <div class="order-modal-content glass-card">
+            <div class="order-header">
+                <i class="fas fa-check-circle"></i>
+                <h3>Order Ready for WhatsApp</h3>
+                <p>Your order details have been prepared</p>
+            </div>
+            <div class="order-details" id="orderDetails">
+                <!-- Order details will be loaded here -->
+            </div>
+            <div class="order-actions">
+                <button class="btn btn-secondary" id="editOrder">Edit Order</button>
+                <a class="btn btn-whatsapp" id="whatsappOrderLink" target="_blank">
+                    <i class="fab fa-whatsapp"></i> Send via WhatsApp
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Space Background Elements -->
+    <div class="space-background">
+        <div class="star"></div>
+        <div class="star"></div>
+        <div class="star"></div>
+        <div class="star"></div>
+        <div class="star"></div>
+        <div class="star"></div>
+        <div class="nebula"></div>
+        <div class="planet-bg"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
